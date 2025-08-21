@@ -31,6 +31,8 @@ global.eventCommands = [];
 global.appState = {};
 global.reactionData = new Map();
 global.usageTracker = new Map();
+global.userXP = new Map();
+global.messageTracker = new Map();
 
 process.on("unhandledRejection", console.error.bind(console));
 process.on("exit", () => fs.writeFileSync(path.join(__dirname, "database", "globalData.json"), JSON.stringify([...global.globalData])));
@@ -89,6 +91,40 @@ global.trackUsage = function (commandName) {
 global.getUsageStats = function () {
   return Array.from(global.usageTracker.entries());
 };
+
+  **
+ * Adds experience points (XP) to a user.
+ * @param {string|number} userId 
+ * @param {number} [amount=10]
+ * @returns {number}
+ */
+global.addXP = function (userId, amount = 10) {
+  const current = global.userXP.get(userId) || 0;
+  const newXP = current + amount;
+  global.userXP.set(userId, newXP);
+  return newXP;
+};
+
+/**
+ * Retrieves the current XP of a user
+ * @param {string|number} userId
+ * @returns {number}
+ */
+global.getXP = function (userId) {
+  return global.userXP.get(userId) || 0;
+};
+
+/**
+ * alculate current XP 
+ * Assumes 100 XP per level
+ * @param {string|number} userId
+ * @returns {number}
+ */
+global.getLevel = function (userId) {
+  const xp = global.getXP(userId);
+  return Math.floor(xp / 100);
+};
+
 
 async function handleReply(api, event) {
   const replyData = global.Kagenou.replies[event.messageReply?.messageID];
