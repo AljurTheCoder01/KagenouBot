@@ -76,6 +76,7 @@ global.setPrefix = function (threadID, prefix) {
 
 
 global.reloadCommands = reloadCommands;
+const AuroraBetaStyler = require(path.join(__dirname, "core", "plugins", "aurora-beta-styler.js"));
 const commandsDir = path.join(__dirname, "commands");
 const bannedUsersFile = path.join(__dirname, "database", "bannedUsers.json");
 const configFile = path.join(__dirname, "config.json");
