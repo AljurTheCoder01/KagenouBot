@@ -37,6 +37,8 @@ global.usageTracker = new Map();
 global.userXP = new Map();
 global.messageTracker = new Map();
 global.nsfwEnabled = new Map();
+/* @Notice false if you want use command to toggle maintenance mdoe. true, if no. */
+global.maintenanceMode = false; 
 process.once("unhandledRejection", console.error);
 process.once("exit", () => {
   fs.writeFileSync(path.join(__dirname, "database", "globalData.json"), JSON.stringify([...global.globalData]));
@@ -457,17 +459,33 @@ const handleMessage = async (api, event) => {
   }
 
   if (command) {
-    const userRole = getUserRole(senderID);
-    const commandRole = command.config?.role ?? command.role ?? 0;
-    if (userRole < commandRole) {
-      console.log(`[COMMAND_DEBUG] Permission denied for UserID: ${senderID}, Command: ${commandName}`);
-      return api.sendMessage(
-        `🛡️ 𝙾𝚗𝚕𝚢 𝙼𝚘𝚍𝚎𝚛𝚊𝚝𝚘𝚛𝚜, 𝚅𝙸𝙿𝚜 𝚘𝚛 𝚑𝚒𝚐𝚑𝚎𝚛 𝚌𝚊𝚗 𝚞𝚜𝚎 𝚝𝚑𝚒𝚜 𝚌𝚘𝚖𝚖𝚊𝚗𝚍.`,
-        threadID,
-        messageID
-      );
-    } /*........*/
+  const userRole = getUserRole(senderID);
+  if (global.maintenanceMode && userRole === 0) {
+    const styledMaintenance = AuroraBetaStyler.styleOutput({
+      headerText: 'Bot Under Maintenance',
+      headerSymbol: '🔧',
+      headerStyle: 'bold',
+      bodyText: 'Please try gain later, bot is under maintenance .',
+      bodyStyle: 'sansSerif',
+      footerText: '',
+    });
+    return api.sendMessage(styledMaintenance, threadID, messageID);
+  }
   
+  const commandRole = command.config?.role ?? command.role ?? 0;
+  if (userRole < commandRole) {
+    console.log(`[COMMAND_DEBUG] Permission denied for UserID: ${senderID}, Command: ${commandName}`);
+    const denyMsg = AuroraBetaStyler.styleOutput({
+      headerText: 'Permission Denied',
+      headerSymbol: '🛡️',
+      headerStyle: 'bold',
+      bodyText: 'Only Moderators, VIPs, or higher can use this command.',
+      bodyStyle: 'sansSerif',
+      footerText: '',
+    });
+    return api.sendMessage(denyMsg, threadID, messageID);
+  }
+    
     const disabledCommandsList = global.disabledCommands.get("disabled") || [];
     if (disabledCommandsList.includes(commandName)) {
       return api.sendMessage(`${commandName.charAt(0).toUpperCase() + commandName.slice(1)} Command is under maintenance please wait..`, threadID, messageID);
