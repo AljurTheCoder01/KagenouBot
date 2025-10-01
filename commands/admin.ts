@@ -1,4 +1,5 @@
-import AuroraBetaStyler from "@aurora/styler"; // Adjust path if necessary
+
+import AuroraBetaStyler from "@aurora/styler"; 
 const { LINE } = AuroraBetaStyler;
 import * as fs from "fs";
 import * as path from "path";
@@ -20,7 +21,6 @@ const adminCommand: ShadowBot.Command = {
     let developers = Array.isArray(config.developers) ? [...config.developers] : [];
     const userId = String(senderID);
     const isDeveloper = developers.includes(userId);
-
     if (!isDeveloper) {
       const errorMessage = AuroraBetaStyler.styleOutput({
         headerText: "Error",
@@ -35,13 +35,12 @@ const adminCommand: ShadowBot.Command = {
 
     const args = body.split(" ").slice(1);
     const subCommand = args[0]?.toLowerCase();
-
     if (!subCommand || subCommand === "list") {
       const promptMessage = AuroraBetaStyler.styleOutput({
         headerText: "Admin List Prompt",
         headerSymbol: "👑",
         headerStyle: "bold",
-        bodyText: "Would you like to see the full list of admins, moderators, and developers? React with 👍 to confirm or 👎 to cancel.",
+        bodyText: "Would you like to see the full list of admins, moderators, developers, and VIPs? React with 👍 to confirm or 👎 to cancel.",
         bodyStyle: "sansSerif",
         footerText: "Developed by: **Aljur pogoy**",
       });
@@ -53,21 +52,19 @@ const adminCommand: ShadowBot.Command = {
         }, messageID);
       }) as { messageID: string };
 
-      // Store reaction data with the original senderID as authorID
       const normalizedMessageID = messageInfo.messageID.trim().replace(/\s+/g, '');
-      
+
       global.reactionData.set(normalizedMessageID, {
         messageID: normalizedMessageID,
         threadID: threadID,
-        authorID: senderID, // Ensure this is the user’s ID, not the bot’s
+        authorID: senderID,
         callback: async ({ api, event, reaction }) => {
           if (reaction === "👍") {
-            const configPath = path.join(__dirname, "..", "config.json");
-            const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-            const vips = Array.isArray(config.vips) ? [...config.vips] : [];
-            const admins = Array.isArray(config.admins) ? [...config.admins] : [];
-            const moderators = Array.isArray(config.moderators) ? [...config.moderators] : [];
-            const developers = Array.isArray(config.developers) ? [...config.developers] : [];
+            const cfg = JSON.parse(fs.readFileSync(configPath, "utf8"));
+            const vips = Array.isArray(cfg.vips) ? [...cfg.vips] : [];
+            const admins = Array.isArray(cfg.admins) ? [...cfg.admins] : [];
+            const moderators = Array.isArray(cfg.moderators) ? [...cfg.moderators] : [];
+            const developers = Array.isArray(cfg.developers) ? [...cfg.developers] : [];
 
             const getUserNames = async (uids: string[]): Promise<string> => {
               if (!Array.isArray(uids) || uids.length === 0) return "None";
@@ -77,7 +74,7 @@ const adminCommand: ShadowBot.Command = {
                   const userInfo = await api.getUserInfo([uid]);
                   const name = userInfo[uid]?.name || "Unknown";
                   names.push(`— ${name}\nUID: ${uid}`);
-                } catch (error) {
+                } catch {
                   names.push(`— Unknown\nUID: ${uid}`);
                 }
               }
@@ -87,10 +84,10 @@ const adminCommand: ShadowBot.Command = {
             const devNames = await getUserNames(developers);
             const modNames = await getUserNames(moderators);
             const adminNames = await getUserNames(admins);
-            const vipsNames = await getUserNames(vips);
+            const vipNames = await getUserNames(vips);
 
             const bodyText = `
-👑 𝗗𝗲𝘃𝗲𝗹𝗈𝗽𝗲𝗿𝘀:
+👑 𝗗𝗲𝘃𝗲𝗅𝗈𝗽𝗲𝗿𝘀:
 ${devNames}
 
 ${LINE}
@@ -106,7 +103,7 @@ ${adminNames}
 ${LINE}
 
 🎭 𝗩𝗜𝗣𝘀:
-${vipsNames}
+${vipNames}
             `.trim();
 
             const fullListMessage = AuroraBetaStyler.styleOutput({
@@ -133,9 +130,8 @@ ${vipsNames}
       });
       return;
     }
-
     if (subCommand === "add") {
-      let uid, role;
+      let uid: string, role: number;
       if (messageReply) {
         uid = messageReply.senderID;
         role = parseInt(args[1]) || 1;
@@ -159,43 +155,54 @@ ${vipsNames}
           headerText: "Error",
           headerSymbol: "❌",
           headerStyle: "bold",
-          bodyText: "Role must be 1 (admin), 2 (moderator), or 3 (developer) or 4 (VIPs).",
+          bodyText: "Role must be 1 (admin), 2 (moderator), 3 (developer) or 4 (VIP).",
           bodyStyle: "sansSerif",
           footerText: "Developed by: **Aljur pogoy**",
         });
         return api.sendMessage(errorMessage, threadID, messageID);
       }
-      if (admins.includes(String(uid)) || moderators.includes(String(uid)) || developers.includes(String(uid))) {
+
+      if (
+        admins.includes(String(uid)) ||
+        moderators.includes(String(uid)) ||
+        developers.includes(String(uid)) ||
+        vips.includes(String(uid))
+      ) {
         const errorMessage = AuroraBetaStyler.styleOutput({
           headerText: "Error",
           headerSymbol: "❌",
           headerStyle: "bold",
-          bodyText: `UID ${uid} is already in the admin list.`,
+          bodyText: `UID ${uid} is already in the admin/VIP list.`,
           bodyStyle: "sansSerif",
           footerText: "Developed by: **Aljur pogoy**",
         });
         return api.sendMessage(errorMessage, threadID, messageID);
       }
-      if (role === 3) developers.push(String(uid));
+      if (role === 4) vips.push(String(uid));
+      else if (role === 3) developers.push(String(uid));
       else if (role === 2) moderators.push(String(uid));
       else admins.push(String(uid));
+
       config.admins = admins;
       config.moderators = moderators;
       config.developers = developers;
+      config.vips = vips;
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
       const userInfo = await api.getUserInfo([uid]);
       const name = userInfo[uid]?.name || "Unknown";
       const successMessage = AuroraBetaStyler.styleOutput({
         headerText: "Success",
         headerSymbol: "✅",
         headerStyle: "bold",
-        bodyText: `Added ${name} (UID: ${uid}) as ${ role === 4 ? "VIPs" : role === 3 ? "Developer" : role === 2 ? "Moderator" : "Admin"} (role ${role}).`,
+        bodyText: `Added ${name} (UID: ${uid}) as ${
+          role === 4 ? "VIP" : role === 3 ? "Developer" : role === 2 ? "Moderator" : "Admin"
+        } (role ${role}).`,
         bodyStyle: "sansSerif",
         footerText: "Developed by: **Aljur pogoy**",
       });
       return api.sendMessage(successMessage, threadID, messageID);
     }
-
     if (subCommand === "remove") {
       if (args.length < 2) {
         const errorMessage = AuroraBetaStyler.styleOutput({
@@ -209,12 +216,17 @@ ${vipsNames}
         return api.sendMessage(errorMessage, threadID, messageID);
       }
       const uid = args[1];
-      if (!admins.includes(String(uid)) && !moderators.includes(String(uid)) && !developers.includes(String(uid))) {
+      if (
+        !admins.includes(String(uid)) &&
+        !moderators.includes(String(uid)) &&
+        !developers.includes(String(uid)) &&
+        !vips.includes(String(uid))
+      ) {
         const errorMessage = AuroraBetaStyler.styleOutput({
           headerText: "Error",
           headerSymbol: "❌",
           headerStyle: "bold",
-          bodyText: `UID ${uid} is not in the admin list.`,
+          bodyText: `UID ${uid} is not in the admin/mod/vip/developer list.`,
           bodyStyle: "sansSerif",
           footerText: "Developed by: **Aljur pogoy**",
         });
@@ -223,37 +235,39 @@ ${vipsNames}
       admins = admins.filter(a => a !== String(uid));
       moderators = moderators.filter(m => m !== String(uid));
       developers = developers.filter(d => d !== String(uid));
+      vips = vips.filter(v => v !== String(uid));
+
       config.admins = admins;
       config.moderators = moderators;
       config.developers = developers;
+      config.vips = vips;
       fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
       const userInfo = await api.getUserInfo([uid]);
       const name = userInfo[uid]?.name || "Unknown";
       const successMessage = AuroraBetaStyler.styleOutput({
         headerText: "Success",
         headerSymbol: "✅",
         headerStyle: "bold",
-        bodyText: `Removed ${name} (UID: ${uid}) from the admin list.`,
+        bodyText: `Removed ${name} (UID: ${uid}) from the admin/mod/vip/developer list.`,
         bodyStyle: "sansSerif",
         footerText: "Developed by: **Aljur pogoy**",
       });
       return api.sendMessage(successMessage, threadID, messageID);
     }
-
     const errorMessage = AuroraBetaStyler.styleOutput({
       headerText: "Error",
       headerSymbol: "❌",
       headerStyle: "bold",
-      bodyText: "Invalid subcommand. Use: #admin list | add <uid> <role> | remove <uid>",
+      bodyText: "Invalid subcommand. Use: admin list | add <uid> <role> | remove <uid>",
       bodyStyle: "sansSerif",
       footerText: "Developed by: **Aljur pogoy**",
     });
     api.sendMessage(errorMessage, threadID, messageID);
   },
   onReaction: async ({ api, event, reaction }) => {
-    const { threadID, messageID, senderID } = event;
+    const { messageID } = event;
     console.log("[DEBUG] onReaction triggered:", reaction, "for MessageID:", messageID);
-    // This is a fallback and can be removed if the inline callback works
   },
 };
 
