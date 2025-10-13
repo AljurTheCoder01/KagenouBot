@@ -8,7 +8,6 @@
 require("tsconfig-paths").register();
 require("ts-node").register();
 require("./core/global");
-require("./Telegram/index");
 const { MongoClient } = require("mongodb");
 const fs = require("fs-extra");
 const path = require("path");
