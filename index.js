@@ -790,4 +790,19 @@ const startBot = async () => {
 });
 };
 
+const express = require("express");
+const app = express();
+app.get("/", (req, res) => {
+  res.send(" Bot is running on Render!");
+});
+
+/** 
+* Use 3000 or 4000 to reserved render hosting site.
+* @Credits: Aljur Pogoy 
+*/
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`[SERVER] Web server running on port ${PORT}`);
+});
+
 startBot();
