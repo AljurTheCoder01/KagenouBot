@@ -19,6 +19,8 @@ Welcome to **Official version of KagenouBot ver 4.0.0**, an elite Facebook Messe
 
 - **Jonell Magallanes** - Biggest thanks for suggesting DiscordBot and Help to setup.
 
+***Join Our Community*** [Join here](https://facebook.com/groups/1989560245158541/)
+
 ---
 
 ## Note: All commands/codes are created by me (Aljur pogoy), except for a few sourced from Botpack."
