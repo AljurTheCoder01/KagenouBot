@@ -14,8 +14,6 @@ module.exports = {
   },
   run: async ({ api, event }) => {
     const { threadID, messageID } = event;
-
-    // Send "please wait" styled message
     const waitingMessage = AuroraBetaStyler.styleOutput({
       headerText: "Looted Pinay",
       headerSymbol: "🎥",
@@ -24,24 +22,19 @@ module.exports = {
       bodyStyle: "sansSerif",
       footerText: "Developed by: Aljur Pogoy",
     });
-
-    // Type-safe promise to capture the waiting message
     const waitMsg = await new Promise<{ messageID: string }>((resolve) => {
       api.sendMessage(waitingMessage, threadID, (err, info) => resolve(info), messageID);
     });
 
     try {
-      // Fetch video metadata
-      const response = await axios.get("https://kaiz-apis.gleeze.com/api/lootedpinay", {
+      const response = await axios.get("https://kaiz-apis.mooo.com/api/lootedpinay", {
         params: {
           limit: 1,
-          apikey: "117cafc8-ef3b-4632-bc1c-13b38b912081",
+          apikey: "9d41cb0c-b7ce-4b35-a037-097b1d8fa8d9",
         },
       });
 
       const { title, mp4url } = response.data.videos[0];
-
-      // Download the video
       const videoResponse = await axios({
         method: "get",
         url: mp4url,
@@ -56,8 +49,6 @@ module.exports = {
         writer.on("finish", resolve);
         writer.on("error", reject);
       });
-
-      // Check file size (Messenger limit ~25MB)
       const stats = fs.statSync(filePath);
       const fileSizeMB = stats.size / (1024 * 1024);
 
@@ -71,12 +62,11 @@ module.exports = {
       });
 
       if (fileSizeMB > 25) {
-        // File too big → send only the link
         api.sendMessage(
           {
             body: `${styledMessage}\n\n⚠️ File is too large to upload.\nWatch here: ${mp4url}`,
           },
-          threadID,
+          threadID, messageID,
           () => {
             fs.unlinkSync(filePath);
             api.unsendMessage(waitMsg.messageID);
@@ -84,7 +74,6 @@ module.exports = {
           messageID
         );
       } else {
-        // Send normally
         api.sendMessage(
           {
             body: styledMessage,
@@ -99,9 +88,8 @@ module.exports = {
         );
       }
     } catch (err) {
-      // Handle API / video download errors
       api.sendMessage(
-        "⚠️ Failed to fetch Looted Pinay video. Please try again later.",
+        " Please try again later.",
         threadID,
         () => api.unsendMessage(waitMsg.messageID),
         messageID
