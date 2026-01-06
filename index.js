@@ -1,8 +1,10 @@
 
+  
 
 /* @author Aljur Pogoy
  * @moderators: Kenneth Panio, Liane Cagara 
  * @admins: Aljur Pogoy, Kenneth Panio, GeoTeam.
+ * @LastPatch Date: January 7, 2026. 12:01 UTC+
 */
 
 require("tsconfig-paths").register();
@@ -14,7 +16,7 @@ const path = require("path");
 const login = require("fbvibex");
 const { handleAuroraCommand, loadAuroraCommands } = require("./core/aurora");
 const chalk = require("chalk");
-const chokidar = require("chokidar");
+/*const chokidar = require("chokidar");*/
 loadAuroraCommands();
 
 /* @GlobalVar */
@@ -246,16 +248,18 @@ global.log.info("Setup Complete!");
 
 
 loadCommands();
-let appState = {};
+let appState;
 
 try {
   appState = JSON.parse(fs.readFileSync("./appstate.dev.json", "utf8"));
 } catch (error) {
   console.error("Error loading appstate.json:", error);
 }
+
 try {
   const configData = JSON.parse(fs.readFileSync(configFile, "utf8"));
   global.log.success("Config Loaded!");
+
   global.config = {
     admins: configData.admins || [],
     moderators: configData.moderators || [],
@@ -265,10 +269,11 @@ try {
     mongoUri: configData.mongoUri || null,
     ...configData,
   };
+
   if (global.config.DiscordMode) {
     console.log("[BOOT] DiscordMode ON → starting Discord bot only…");
     require("./Discord/index");
-    return; 
+    process.exit(0); // instead of return
   }
 
 } catch (error) {
@@ -282,14 +287,6 @@ try {
     mongoUri: null
   };
 }
-chokidar.watch(configFile).on("change", () => {
-  try {
-    global.config = JSON.parse(fs.readFileSync(configFile, "utf8"));
-    global.log.success("Config reloaded successfully!");
-  } catch (error) {
-    global.log.error("Failed to reload config: " + error.message);
-  }
-});
 
 let db = null;
 const uri = global.config.mongoUri || null;
