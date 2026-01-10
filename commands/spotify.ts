@@ -50,7 +50,7 @@ const spotifyCommand: ShadowBot.Command = {
     });
     await api.sendMessage(waitMessage, threadID, messageID);
     try {
-      const searchURL = `https://kaiz-apis.gleeze.com/api/spotify-search?q=${keyword}&apikey=8aa2f0a0-cbb9-40b8-a7d8-bba320cb9b10`;
+      const searchURL = `https://kaiz-apis.mooo.com/api/spotify-search?q=${keyword}&apikey=fa07babd-5aa7-4cd1-aad7-d01bc0ee47e7`;
       const searchRes = await axios.get(searchURL);
       const track = searchRes.data[0];
       if (!track || !track.trackUrl) {
@@ -64,7 +64,7 @@ const spotifyCommand: ShadowBot.Command = {
         });
         return api.sendMessage(errorMessage, threadID, messageID);
       }
-      const downloadURL = `https://kaiz-apis.gleeze.com/api/spotify-down?url=${encodeURIComponent(track.trackUrl)}&apikey=8aa2f0a0-cbb9-40b8-a7d8-bba320cb9b10`;
+      const downloadURL = `https://kaiz-apis.mooo.com/api/spotify-down?url=${encodeURIComponent(track.trackUrl)}&apikey=fa07babd-5aa7-4cd1-aad7-d01bc0ee47e7`;
       const dlRes = await axios.get(downloadURL);
       const { title, url, artist, thumbnail } = dlRes.data;
       const imgPath = path.join(__dirname, 'cache', `thumb_${senderID}.jpg`);
